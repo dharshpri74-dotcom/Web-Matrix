@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinVerse — Multi-Agent Research Platform</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#050a18;--bg-primary:#0a0f24;--bg-card:rgba(14,22,50,.75);
+  --bg-elevated:rgba(20,30,65,.85);--bg-glass:rgba(16,24,52,.6);
+  --border:rgba(50,65,120,.35);--border-hover:rgba(80,130,255,.5);
+  --text-primary:#e6ecf8;--text-secondary:#8892b5;--text-muted:#4a5580;
+  --accent-blue:#4f8cff;--accent-purple:#a06bff;--accent-green:#34d399;
+  --accent-red:#ff4d6a;--accent-orange:#ffb347;--accent-cyan:#22d3ee;
+  --accent-gold:#ffd700;
+  --gradient-hero:linear-gradient(135deg,#4f8cff 0%,#a06bff 50%,#22d3ee 100%);
+  --gradient-warm:linear-gradient(135deg,#ff4d6a,#ffb347);
+  --shadow-glow:0 0 40px rgba(79,140,255,.08);
+  --radius:16px;--radius-md:12px;--radius-sm:8px;
+  --transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg-deep);color:var(--text-primary);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  line-height:1.6;min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 900px 700px at 15% 15%,rgba(79,140,255,.06),transparent),
+    radial-gradient(ellipse 700px 600px at 85% 85%,rgba(160,107,255,.05),transparent),
+    radial-gradient(ellipse 600px 500px at 55% 25%,rgba(34,211,238,.03),transparent);
+  pointer-events:none;
+}
+.app{position:relative;z-index:1;max-width:1360px;margin:0 auto;padding:24px 28px 20px}
+
+/* ── Title Screen / Splash ───────────────────────── */
+#splash{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg-deep);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  transition:opacity .6s ease,visibility .6s ease;
+}
+#splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#splash .logo-big{
+  font-size:52px;font-weight:900;letter-spacing:-1px;
+  background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:8px;
+}
+#splash .tagline-big{
+  font-size:16px;color:var(--text-secondary);margin-bottom:32px;max-width:520px;text-align:center;line-height:1.7;
+}
+#splash .enter-btn{
+  padding:14px 36px;border:none;border-radius:30px;font-size:15px;font-weight:700;
+  background:var(--gradient-hero);color:#fff;cursor:pointer;
+  box-shadow:0 6px 30px rgba(79,140,255,.3);transition:var(--transition);font-family:inherit;
+}
+#splash .enter-btn:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(79,140,255,.4)}
+#splash .version{position:absolute;bottom:24px;font-size:11px;color:var(--text-muted)}
+
+/* ── Header ─────────────────────────────────────── */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;border-radius:10px;background:var(--gradient-hero);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;box-shadow:0 4px 16px rgba(79,140,255,.3)}
+.logo h1{font-size:22px;font-weight:800;letter-spacing:-.5px;background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo .tagline{font-size:11px;color:var(--text-muted);margin-top:1px}
+.header-controls{display:flex;align-items:center;gap:10px}
+
+/* ── Tabs ───────────────────────────────────────── */
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-md);padding:4px;backdrop-filter:blur(12px)}
+.tab{padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);color:var(--text-muted);border:none;background:transparent;font-family:inherit}
+.tab:hover{color:var(--text-secondary);background:rgba(79,140,255,.06)}
+.tab.active{background:rgba(79,140,255,.12);color:var(--accent-blue);box-shadow:0 2px 8px rgba(79,140,255,.15)}
+
+/* ── Buttons ────────────────────────────────────── */
+.btn{padding:10px 20px;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:7px;font-family:inherit}
+.btn-primary{background:var(--gradient-hero);color:#fff;box-shadow:0 4px 16px rgba(79,140,255,.2)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(79,140,255,.3)}
+.btn-danger{background:rgba(255,77,106,.1);color:var(--accent-red);border:1px solid rgba(255,77,106,.2)}
+.btn-danger:hover{background:rgba(255,77,106,.2);border-color:rgba(255,77,106,.4)}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent-blue);color:var(--accent-blue)}
+.btn-ghost.active{border-color:var(--accent-red);color:var(--accent-red);background:rgba(255,77,106,.08)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-xs{padding:4px 10px;font-size:11px}
+
+/* ── Cards / Sections ───────────────────────────── */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(12px);transition:var(--transition)}
+.card:hover{border-color:var(--border-hover)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.card-header h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+
+/* ── Grid Layouts ───────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ── Dashboard Tab ──────────────────────────────── */
+.stock-list{display:flex;flex-direction:column;gap:8px;max-height:500px;overflow-y:auto}
+.stock-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(10,16,38,.6);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition)}
+.stock-row:hover{border-color:var(--border-hover);transform:translateX(3px);box-shadow:var(--shadow-glow)}
+.stock-row .sym{font-weight:700;font-size:14px;min-width:100px}
+.stock-row .name{color:var(--text-secondary);font-size:12px;flex:1;margin:0 12px}
+.stock-row .price{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;min-width:90px;text-align:right}
+.stock-row .change{font-size:12px;font-weight:600;min-width:70px;text-align:right}
+.positive{color:var(--accent-green)}.negative{color:var(--accent-red)}
+
+/* ── Signal Badges ──────────────────────────────── */
+.signal-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:inline-flex;align-items:center;gap:5px}
+.signal-bullish{background:rgba(52,211,153,.12);color:var(--accent-green);border:1px solid rgba(52,211,153,.25)}
+.signal-bearish{background:rgba(255,77,106,.12);color:var(--accent-red);border:1px solid rgba(255,77,106,.25)}
+.signal-neutral{background:rgba(255,179,71,.12);color:var(--accent-orange);border:1px solid rgba(255,179,71,.25)}
+.signal-unavailable{background:rgba(100,110,140,.12);color:var(--text-muted);border:1px solid rgba(100,110,140,.25);font-style:italic}
+
+/* ── Persona Selector ───────────────────────────── */
+.persona-bar{display:flex;gap:8px;margin-bottom:20px}
+.persona-btn{flex:1;padding:12px 16px;border:2px solid var(--border);border-radius:var(--radius-md);background:var(--bg-glass);cursor:pointer;transition:var(--transition);text-align:center;font-family:inherit}
+.persona-btn:hover{border-color:var(--border-hover)}
+.persona-btn.active{border-color:var(--accent-blue);background:rgba(79,140,255,.08);box-shadow:0 0 20px rgba(79,140,255,.1)}
+.persona-btn .icon{font-size:20px;margin-bottom:4px}
+.persona-btn .label{font-size:12px;font-weight:600;color:var(--text-primary)}
+.persona-btn .desc{font-size:10px;color:var(--text-muted);margin-top:2px}
+
+/* ── Agent Output Cards ─────────────────────────── */
+.agent-card{padding:18px;border-radius:var(--radius-md);border:1px solid var(--border);background:rgba(10,16,38,.6);transition:var(--transition)}
+.agent-card:hover{border-color:var(--border-hover)}
+.agent-card h4{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.agent-card .signal-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.agent-card .confidence-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;flex:1}
+.agent-card .confidence-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.agent-card .reasoning{font-size:12px;color:var(--text-secondary);line-height:1.6;max-height:120px;overflow-y:auto}
+.agent-card .metadata{font-size:10px;color:var(--text-muted);margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
+
+/* ── Reasoning Trace ────────────────────────────── */
+.trace{display:flex;flex-direction:column;gap:12px}
+.trace-step{padding:14px 16px;border-left:3px solid var(--border);background:rgba(10,16,38,.5);border-radius:0 var(--radius-sm) var(--radius-sm) 0;transition:var(--transition)}
+.trace-step:hover{border-left-color:var(--accent-blue)}
+.trace-step .step-num{font-size:10px;font-weight:700;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.trace-step .step-agent{font-size:13px;font-weight:600;margin-bottom:4px}
+.trace-step .step-finding{font-size:12px;color:var(--text-secondary);line-height:1.6}
+
+/* ── Citations Panel ────────────────────────────── */
+.citation{padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:rgba(10,16,38,.5);cursor:pointer;transition:var(--transition)}
+.citation:hover{border-color:var(--accent-purple);background:rgba(160,107,255,.05)}
+.citation .cit-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.citation .cit-id{font-size:11px;font-weight:700;color:var(--accent-purple);background:rgba(160,107,255,.12);padding:2px 8px;border-radius:10px}
+.citation .cit-score{font-size:10px;color:var(--text-muted)}
+.citation .cit-title{font-size:12px;font-weight:600;margin-bottom:4px}
+.citation .cit-excerpt{font-size:11px;color:var(--text-secondary);line-height:1.5}
+.citation .cit-full{font-size:12px;color:var(--text-primary);line-height:1.7;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:none}
+.citation.expanded .cit-full{display:block}
+
+/* ── Comparison View ────────────────────────────── */
+.compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1000px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{border:2px solid var(--border);border-radius:var(--radius);padding:20px;transition:var(--transition)}
+.compare-card.conservative{border-color:rgba(52,211,153,.25)}
+.compare-card.balanced{border-color:rgba(79,140,255,.25)}
+.compare-card.aggressive{border-color:rgba(255,77,106,.25)}
+.compare-card h4{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.compare-card .persona-desc{font-size:11px;color:var(--text-muted);margin-bottom:12px}
+.compare-card .recommendation{font-size:12px;color:var(--text-secondary);line-height:1.7;white-space:pre-line}
+
+/* ── Metrics Panel ──────────────────────────────── */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.metric-grid{grid-template-columns:repeat(2,1fr)}}
+.metric-box{background:rgba(10,16,38,.6);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;transition:var(--transition)}
+.metric-box:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+.metric-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.metric-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.metric-sub{font-size:10px;color:var(--text-muted);margin-top:4px}
+
+/* ── Toast ──────────────────────────────────────── */
+.toast-container{position:fixed;top:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:toastIn .35s ease;backdrop-filter:blur(12px);border:1px solid transparent;max-width:360px}
+.toast-success{background:rgba(12,35,28,.92);color:var(--accent-green);border-color:rgba(52,211,153,.25)}
+.toast-error{background:rgba(35,12,18,.92);color:var(--accent-red);border-color:rgba(255,77,106,.25)}
+.toast-info{background:rgba(10,16,40,.92);color:var(--accent-blue);border-color:rgba(79,140,255,.25)}
+@keyframes toastIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── Loading Spinner ────────────────────────────── */
+.spinner{width:20px;height:20px;border:2px solid rgba(79,140,255,.2);border-top-color:var(--accent-blue);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:absolute;inset:0;background:rgba(5,10,24,.7);display:flex;align-items:center;justify-content:center;border-radius:var(--radius);z-index:10;backdrop-filter:blur(4px)}
+
+/* ── Recommendation Box ─────────────────────────── */
+.reco-box{padding:20px;border-radius:var(--radius-md);border:1px solid var(--border);background:rgba(10,16,38,.5);margin-top:16px}
+.reco-box h4{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.reco-box .reco-text{font-size:13px;color:var(--text-secondary);line-height:1.8;white-space:pre-line}
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Section headers ────────────────────────────── */
+.section-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+</style>
+</head>
+<body>
+
+<!-- Splash / Title Screen -->
+<div id="splash">
+  <div class="logo-big">FinVerse</div>
+  <div class="tagline-big">
+    Multi-Agent Stock Research Platform<br>
+    <span style="color:var(--text-muted)">Hedge-fund-level analysis for every investor — in 60 seconds, fully cited, fully explainable.</span>
+  </div>
+  <button class="enter-btn" onclick="document.getElementById('splash').classList.add('hidden')">Enter FinVerse →</button>
+  <div class="version">v1.0 — Demo Mode · Synthetic Data · No API Keys Required</div>
+</div>
+
+<div class="app" id="mainApp" style="opacity:0;transition:opacity .6s ease .3s">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">FV</div>
+      <div>
+        <h1>FinVerse</h1>
+        <div class="tagline">Multi-Agent Stock Research Platform</div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <button class="btn btn-danger btn-sm" id="outageBtn" onclick="toggleOutage()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Simulate Feed Outage
+      </button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
+    <button class="tab" onclick="switchTab('analysis',this)">🔍 Deep Analysis</button>
+    <button class="tab" onclick="switchTab('compare',this)">⚖️ Persona Compare</button>
+    <button class="tab" onclick="switchTab('metrics',this)">📈 Metrics</button>
+  </div>
+
+  <!-- ═══ Dashboard Tab ═══ -->
+  <div id="tab-dashboard" class="tab-content">
+    <div class="persona-bar" id="personaBar"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>📈 Stock Universe</h3>
+          <button class="btn btn-ghost btn-xs" onclick="loadStocks()">Refresh</button>
+        </div>
+        <div class="stock-list" id="stockList">
+          <div style="text-align:center;padding:30px;color:var(--text-muted)"><div class="spinner"></div> Loading stocks...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>🎯 Quick Analysis</h3>
+          <span id="quickStatus" style="font-size:11px;color:var(--text-muted)">Select a stock →</span>
+        </div>
+        <div id="quickPanel" style="min-height:200px">
+          <div style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px">
+            Click a stock in the list to run a quick multi-agent analysis
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Deep Analysis Tab ═══ -->
+  <div id="tab-analysis" class="tab-content" style="display:none">
+    <div class="persona-bar" id="personaBar2"></div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center">
+      <select id="analysisSymbol" style="padding:10px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(10,16,38,.8);color:var(--text-primary);font-size:13px;font-family:inherit;min-width:180px">
+      </select>
+      <button class="btn btn-primary" onclick="runDeepAnalysis()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Run Full Analysis
+      </button>
+    </div>
+
+    <div id="deepResults" style="display:none">
+      <!-- Agent Outputs -->
+      <div class="grid-3" id="agentCards" style="margin-bottom:16px"></div>
+
+      <!-- Recommendation + Reasoning Trace -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>💡 Recommendation</h3></div>
+          <div id="recommendationBox"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>🔗 Reasoning Trace</h3></div>
+          <div class="trace" id="reasoningTrace"></div>
+        </div>
+      </div>
+
+      <!-- Citations -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><h3>📄 Source Citations</h3></div>
+        <div id="citationsPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Compare Tab ═══ -->
+  <div id="tab-compare" class="tab-content" style="display:none">
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center">
+      <select id="compareSymbol" style="padding:10px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(10,16,38,.8);color:var(--text-primary);font-size:13px;font-family:inherit;min-width:180px">
+      </select>
+      <button class="btn btn-primary" onclick="runComparison()">
+        ⚖️ Compare All Personas
+      </button>
+    </div>
+    <div id="compareResults"></div>
+  </div>
+
+  <!-- ═══ Metrics Tab ═══ -->
+  <div id="tab-metrics" class="tab-content" style="display:none">
+    <div class="metric-grid" id="metricsGrid" style="margin-bottom:20px"></div>
+    <div class="card">
+      <div class="card-header"><h3>📋 Recent Analysis Sessions</h3></div>
+      <div id="sessionsTable"></div>
+    </div>
+  </div>
+
+  <footer style="text-align:center;padding:28px 0 16px;color:var(--text-muted);font-size:10px">
+    FinVerse v1.0 — Synthetic data, simulated analysis. Not financial advice. Built for demo purposes.
+  </footer>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  FinVerse — Frontend Application
+// ══════════════════════════════════════════════════════════
+
+const API = 'http://127.0.0.1:8000';
+let activePersona = 'balanced';
+let simulateOutage = false;
+
+// ── Splash → Main App ─────────────────────────────
+setTimeout(() => { document.getElementById('mainApp').style.opacity = '1'; }, 100);
+
+// ── Toast ──────────────────────────────────────────
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
+}
+
+// ── Tab Switching ──────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).style.display = 'block';
+  btn.classList.add('active');
+  if (id === 'metrics') loadMetrics();
+}
+
+// ── Outage Toggle ──────────────────────────────────
+function toggleOutage() {
+  simulateOutage = !simulateOutage;
+  const btn = document.getElementById('outageBtn');
+  if (simulateOutage) {
+    btn.classList.add('active');
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Outage Active ⚠️';
+    toast('⚠️ Sentiment feed outage SIMULATED — next analysis will show degraded-data handling', 'error');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Simulate Feed Outage';
+    toast('✅ Sentiment feed restored — normal analysis resumed', 'success');
+  }
+}
+
+// ── Persona Bar ────────────────────────────────────
+const PERSONAS = [
+  { id: 'conservative', icon: '🛡️', label: 'Conservative', desc: 'Capital preservation first' },
+  { id: 'balanced', icon: '⚖️', label: 'Balanced', desc: 'Growth + stability mix' },
+  { id: 'aggressive', icon: '🚀', label: 'Aggressive', desc: 'Maximize growth' },
+];
+
+function renderPersonaBars() {
+  const bars = [document.getElementById('personaBar'), document.getElementById('personaBar2')];
+  bars.forEach(bar => {
+    if (!bar) return;
+    bar.innerHTML = PERSONAS.map(p => `
+      <button class="persona-btn ${p.id === activePersona ? 'active' : ''}" onclick="selectPersona('${p.id}')">
+        <div class="icon">${p.icon}</div>
+        <div class="label">${p.label}</div>
+        <div class="desc">${p.desc}</div>
+      </button>
+    `).join('');
+  });
+}
+
+function selectPersona(id) {
+  activePersona = id;
+  renderPersonaBars();
+  toast(`Persona: ${PERSONAS.find(p=>p.id===id).label}`, 'info');
+}
+
+// ── Load Stocks ────────────────────────────────────
+async function loadStocks() {
+  try {
+    const res = await fetch(API + '/api/stocks');
+    const data = await res.json();
+    const list = document.getElementById('stockList');
+    list.innerHTML = data.stocks.map(s => `
+      <div class="stock-row" onclick="quickAnalyze('${s.symbol}')">
+        <span class="sym">${s.symbol}</span>
+        <span class="name">${s.name}</span>
+        <span class="price">₹${s.price.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+        <span class="change ${s.change_pct >= 0 ? 'positive' : 'negative'}">${s.change_pct >= 0 ? '+' : ''}${s.change_pct.toFixed(2)}%</span>
+      </div>
+    `).join('');
+
+    // Populate select dropdowns
+    const selects = ['analysisSymbol', 'compareSymbol'];
+    selects.forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel) {
+        sel.innerHTML = data.stocks.map(s => `<option value="${s.symbol}">${s.symbol} — ${s.name}</option>`).join('');
+      }
+    });
+  } catch (e) {
+    document.getElementById('stockList').innerHTML = `<div style="padding:20px;color:var(--accent-red);font-size:12px">⚠️ Cannot connect to backend. Make sure the server is running on port 8000.</div>`;
+  }
+}
+
+// ── Quick Analysis ─────────────────────────────────
+async function quickAnalyze(symbol) {
+  const panel = document.getElementById('quickPanel');
+  const status = document.getElementById('quickStatus');
+  status.textContent = 'Analyzing...';
+  panel.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div><div style="font-size:12px;color:var(--text-muted);margin-top:10px">Running 3 agents in parallel...</div></div>';
+
+  try {
+    const res = await fetch(API + '/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, persona: activePersona, simulate_outage: simulateOutage })
+    });
+    const data = await res.json();
+    panel.innerHTML = renderQuickResult(data);
+    status.textContent = `${symbol} • ${data.total_latency_ms}ms • ${data.synthesis.overall_signal.toUpperCase()}`;
+  } catch (e) {
+    panel.innerHTML = `<div style="padding:20px;color:var(--accent-red);font-size:12px">⚠️ Analysis failed: ${e.message}</div>`;
+    status.textContent = 'Error';
+  }
+}
+
+function renderQuickResult(data) {
+  const s = data.synthesis;
+  const signalClass = s.agents_missing?.length > 0 ? 'signal-neutral' : `signal-${s.overall_signal}`;
+
+  let agentHtml = '';
+  for (const [name, result] of Object.entries(data.agent_results || {})) {
+    if (!result) continue;
+    const signal = result.error ? 'unavailable' : (result.signal || 'neutral');
+    const conf = result.confidence || 0;
+    agentHtml += `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,16,38,.4);border-radius:8px;margin-bottom:6px">
+        <span class="signal-badge signal-${signal}" style="min-width:80px;text-align:center">${signal}</span>
+        <span style="font-size:12px;color:var(--text-secondary);flex:1">${result.agent || name}</span>
+        <span style="font-size:11px;color:var(--text-muted)">${(conf*100).toFixed(0)}%</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <span class="signal-badge ${signalClass}" style="font-size:14px;padding:6px 16px">${s.overall_signal.toUpperCase()}</span>
+      <span style="font-size:14px;font-weight:700">${s.overall_confidence.toFixed(0)}% confidence</span>
+      ${s.agents_missing?.length ? `<span style="font-size:11px;color:var(--accent-orange)">⚠️ ${s.agents_missing.length} agent(s) unavailable</span>` : ''}
+    </div>
+    ${agentHtml}
+    <div style="margin-top:12px;padding:14px;border-radius:8px;background:rgba(10,16,38,.5);border:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--accent-blue);margin-bottom:6px">💡 PERSONALIZED RECOMMENDATION</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;white-space:pre-line">${data.recommendation}</div>
+    </div>
+    <div style="margin-top:8px;text-align:right">
+      <button class="btn btn-ghost btn-xs" onclick="switchTab('analysis',document.querySelectorAll('.tab')[1]);document.getElementById('analysisSymbol').value='${data.symbol}';runDeepAnalysis()">View Full Analysis →</button>
+    </div>
+  `;
+}
+
+// ── Deep Analysis ──────────────────────────────────
+async function runDeepAnalysis() {
+  const symbol = document.getElementById('analysisSymbol').value;
+  const results = document.getElementById('deepResults');
+  results.style.display = 'none';
+
+  toast(`Running full analysis for ${symbol}...`, 'info');
+
+  try {
+    const res = await fetch(API + '/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, persona: activePersona, simulate_outage: simulateOutage })
+    });
+    const data = await res.json();
+
+    results.style.display = 'block';
+    renderAgentCards(data);
+    renderRecommendation(data);
+    renderReasoningTrace(data);
+    renderCitations(data);
+  } catch (e) {
+    toast(`Analysis failed: ${e.message}`, 'error');
+  }
+}
+
+function renderAgentCards(data) {
+  const container = document.getElementById('agentCards');
+  const agents = [
+    { key: 'momentum', name: 'Momentum Agent', icon: '📊', color: 'var(--accent-blue)' },
+    { key: 'sentiment', name: 'Sentiment Agent', icon: '📰', color: 'var(--accent-purple)' },
+    { key: 'fundamentals', name: 'Fundamentals/RAG', icon: '📄', color: 'var(--accent-cyan)' },
+  ];
+
+  container.innerHTML = agents.map(a => {
+    const result = data.agent_results[a.key];
+    if (!result) return '';
+    const signal = result.error ? 'unavailable' : (result.signal || 'neutral');
+    const conf = result.confidence || 0;
+    const meta = result.metadata || {};
+    const metaHtml = Object.entries(meta).filter(([k]) => k !== 'sources').map(([k,v]) =>
+      `<span>${k}: ${typeof v === 'number' ? v.toFixed ? v.toFixed(2) : v : v}</span>`
+    ).join('');
+
+    return `
+      <div class="agent-card">
+        <h4 style="color:${a.color}">${a.icon} ${a.name}</h4>
+        <div class="signal-row">
+          <span class="signal-badge signal-${signal}">${signal}</span>
+          <div class="confidence-bar">
+            <div class="confidence-fill" style="width:${conf*100}%;background:${a.color}"></div>
+          </div>
+          <span style="font-size:12px;font-weight:600">${(conf*100).toFixed(0)}%</span>
+        </div>
+        <div class="reasoning">${result.reasoning || 'No reasoning available'}</div>
+        <div class="metadata">${metaHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderRecommendation(data) {
+  const box = document.getElementById('recommendationBox');
+  box.innerHTML = `
+    <div class="reco-box">
+      <h4>💡 Recommendation for <span style="color:var(--accent-blue)">${data.symbol}</span> — <span style="color:var(--accent-purple)">${data.persona_applied?.name || 'Balanced'}</span></h4>
+      <div class="reco-text">${data.recommendation}</div>
+    </div>
+  `;
+}
+
+function renderReasoningTrace(data) {
+  const trace = document.getElementById('reasoningTrace');
+  trace.innerHTML = (data.reasoning_trace || []).map(step => `
+    <div class="trace-step">
+      <div class="step-num">Step ${step.step}</div>
+      <div class="step-agent">${step.agent} → <span class="signal-badge signal-${step.signal}" style="font-size:10px">${step.signal}</span></div>
+      <div class="step-finding">${step.finding}</div>
+    </div>
+  `).join('');
+}
+
+function renderCitations(data) {
+  const panel = document.getElementById('citationsPanel');
+  const citations = data.citations || [];
+  if (!citations.length) {
+    panel.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:12px">No citations available for this analysis.</div>';
+    return;
+  }
+  panel.innerHTML = citations.map(c => `
+    <div class="citation" onclick="this.classList.toggle('expanded')">
+      <div class="cit-header">
+        <span class="cit-id">Source ${c.citation_id}</span>
+        <span class="cit-score">Relevance: ${(c.relevance_score * 100).toFixed(0)}%</span>
+      </div>
+      <div class="cit-title">${c.title}</div>
+      <div class="cit-excerpt">${c.excerpt}</div>
+      <div class="cit-full">
+        <div style="font-size:10px;color:var(--accent-purple);font-weight:600;margin-bottom:4px">📄 Full Source Chunk (Document: ${c.doc_id})</div>
+        ${c.excerpt}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Persona Comparison ─────────────────────────────
+async function runComparison() {
+  const symbol = document.getElementById('compareSymbol').value;
+  const container = document.getElementById('compareResults');
+
+  container.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div><div style="font-size:12px;color:var(--text-muted);margin-top:10px">Running parallel analysis for all 3 personas...</div></div>';
+
+  try {
+    const res = await fetch(API + '/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol })
+    });
+    const data = await res.json();
+
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <h3>⚖️ Side-by-Side: <span style="color:var(--accent-blue)">${symbol}</span> at ₹${data.current_price?.toLocaleString('en-IN') || 'N/A'}</h3>
+          <span class="signal-badge signal-${data.comparisons[0]?.synthesis?.overall_signal || 'neutral'}" style="font-size:13px">
+            Same signal, different recommendations
+          </span>
+        </div>
+      </div>
+      <div class="compare-grid">
+        ${data.comparisons.map(c => `
+          <div class="compare-card ${c.persona.id}">
+            <h4>${c.persona.icon} ${c.persona.name}</h4>
+            <div class="persona-desc">${c.persona.description}</div>
+            <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+              <span class="signal-badge signal-${c.synthesis.overall_signal}">${c.synthesis.overall_signal.toUpperCase()}</span>
+              <span style="font-size:12px;color:var(--text-muted)">${c.synthesis.overall_confidence.toFixed(0)}% confidence</span>
+            </div>
+            <div class="recommendation">${c.recommendation}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div style="padding:20px;color:var(--accent-red)">⚠️ Comparison failed: ${e.message}</div>`;
+  }
+}
+
+// ── Metrics ────────────────────────────────────────
+async function loadMetrics() {
+  try {
+    const [metricsRes, sessionsRes] = await Promise.all([
+      fetch(API + '/api/metrics'),
+      fetch(API + '/api/metrics/recent')
+    ]);
+    const metrics = await metricsRes.json();
+    const sessions = await sessionsRes.json();
+
+    const grid = document.getElementById('metricsGrid');
+    const lat = metrics.agent_latencies || {};
+    grid.innerHTML = `
+      <div class="metric-box">
+        <div class="metric-label">Total Sessions</div>
+        <div class="metric-value" style="color:var(--accent-blue)">${metrics.total_sessions}</div>
+        <div class="metric-sub">analyses completed</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Avg Confidence</div>
+        <div class="metric-value" style="color:var(--accent-green)">${(metrics.confidence_stats?.avg * 100 || 0).toFixed(0)}%</div>
+        <div class="metric-sub">range ${(metrics.confidence_stats?.min * 100 || 0).toFixed(0)}%–${(metrics.confidence_stats?.max * 100 || 0).toFixed(0)}%</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Avg Agent Latency</div>
+        <div class="metric-value" style="color:var(--accent-cyan)">${Object.values(lat).reduce((a,b) => a + (b.avg_ms||0), 0).toFixed(0)}ms</div>
+        <div class="metric-sub">combined agent time</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Outage Impact</div>
+        <div class="metric-value" style="color:var(--accent-orange)">${metrics.degradation_impact?.avg_confidence_with_outage ? ((1 - metrics.degradation_impact.avg_confidence_with_outage / Math.max(metrics.degradation_impact.avg_confidence_normal, 0.01)) * 100).toFixed(0) : 0}%</div>
+        <div class="metric-sub">confidence reduction</div>
+      </div>
+    `;
+
+    const table = document.getElementById('sessionsTable');
+    if (sessions.sessions?.length) {
+      table.innerHTML = `
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="border-bottom:1px solid var(--border);text-align:left">
+            <th style="padding:8px;color:var(--text-muted)">Time</th>
+            <th style="padding:8px;color:var(--text-muted)">Symbol</th>
+            <th style="padding:8px;color:var(--text-muted)">Persona</th>
+            <th style="padding:8px;color:var(--text-muted)">Signal</th>
+            <th style="padding:8px;color:var(--text-muted)">Confidence</th>
+            <th style="padding:8px;color:var(--text-muted)">Latency</th>
+            <th style="padding:8px;color:var(--text-muted)">Outage</th>
+          </tr></thead>
+          <tbody>
+          ${sessions.sessions.map(s => `
+            <tr style="border-bottom:1px solid rgba(50,65,120,.15)">
+              <td style="padding:8px;color:var(--text-muted)">${new Date(s.created_at).toLocaleTimeString()}</td>
+              <td style="padding:8px;font-weight:600">${s.symbol}</td>
+              <td style="padding:8px">${s.persona}</td>
+              <td style="padding:8px"><span class="signal-badge signal-${s.overall_signal || 'neutral'}" style="font-size:10px">${(s.overall_signal || 'N/A').toUpperCase()}</span></td>
+              <td style="padding:8px">${((s.overall_confidence || 0) * 100).toFixed(0)}%</td>
+              <td style="padding:8px;color:var(--text-muted)">${(s.total_latency_ms || 0).toFixed(0)}ms</td>
+              <td style="padding:8px">${s.simulate_outage ? '⚠️ Yes' : '—'}</td>
+            </tr>
+          `).join('')}
+          </tbody>
+        </table>
+      `;
+    } else {
+      table.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">No sessions yet. Run an analysis to see metrics.</div>';
+    }
+  } catch (e) {
+    document.getElementById('metricsGrid').innerHTML = `<div style="padding:20px;color:var(--accent-red);font-size:12px">⚠️ Cannot load metrics. Backend may not be running.</div>`;
+  }
+}
+
+// ── Init ───────────────────────────────────────────
+renderPersonaBars();
+loadStocks();
+</script>
+</body>
+</html>
